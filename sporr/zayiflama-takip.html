@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Zayıflama Takip Sistemi</title>
+    <style>
+        body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0 10px; border-radius: 5px; border: 1px solid #ccc; }
+        h2 { background: #4CAF50; color: white; padding: 10px; border-radius: 5px; }
+        button { padding: 10px 20px; margin-top: 10px; border: none; background: #4CAF50; color: white; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        td, th { padding: 8px; border: 1px solid #ccc; text-align: center; vertical-align: top; }
+        .small-title { margin-top: 20px; font-weight: bold; }
+        textarea { resize: vertical; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Zayıflama Planı ve Günlük Takip</h1>
+
+    <h2>Hedef Bilgileri</h2>
+    Başlangıç Tarihi: <input type="date" id="baslangic" />
+    Hedef Bitiş Tarihi: <input type="date" id="bitis" />
+    Boy (cm): <input type="number" id="boy" />
+    Güncel Kilo (kg): <input type="number" id="kilo" />
+
+    <button onclick="kaydetHedef()">Hedefi Kaydet</button>
+
+    <div id="hedefGoster"></div>
+
+    <h2>Haftalık Yemek Planı</h2>
+    <table>
+        <tr>
+            <th>Gün</th>
+            <th>Öğle Yemeği</th>
+            <th>Akşam Yemeği</th>
+        </tr>
+        <script>
+            const gunler = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+            gunler.forEach(gun => {
+                document.write(`
+                    <tr>
+                        <td>${gun}</td>
+                        <td><textarea id="yemek_ogle_${gun}" rows="2" placeholder="Öğle yemeğini yaz..."></textarea></td>
+                        <td><textarea id="yemek_aksam_${gun}" rows="2" placeholder="Akşam yemeğini yaz..."></textarea></td>
+                    </tr>
+                `);
+            });
+        </script>
+    </table>
+
+    <h2>Haftalık Spor Planı</h2>
+    <table>
+        <tr>
+            <th>Gün</th>
+            <th>Spor Planı</th>
+        </tr>
+        <script>
+            gunler.forEach(gun => {
+                document.write(`
+                    <tr>
+                        <td>${gun}</td>
+                        <td><textarea id="spor_${gun}" rows="2" placeholder="Spor planını yaz..."></textarea></td>
+                    </tr>
+                `);
+            });
+        </script>
+    </table>
+
+    <button onclick="kaydetPlan()">Planı Kaydet</button>
+
+    <div class="small-title">Kayıtlarım:</div>
+    <pre id="kayitlar"></pre>
+</div>
+
+<script>
+    function kaydetHedef() {
+        const hedef = {
+            baslangic: document.getElementById("baslangic").value,
+            bitis: document.getElementById("bitis").value,
+            boy: document.getElementById("boy").value,
+            kilo: document.getElementById("kilo").value
+        };
+        localStorage.setItem("hedefBilgi", JSON.stringify(hedef));
+        gosterHedef();
+    }
+
+    function gosterHedef() {
+        const veri = JSON.parse(localStorage.getItem("hedefBilgi") || "{}");
+        let yaz = "";
+        if (veri.baslangic) {
+            yaz += `<b>Başlangıç Tarihi:</b> ${veri.baslangic}<br>`;
+            yaz += `<b>Hedef Bitiş Tarihi:</b> ${veri.bitis}<br>`;
+            yaz += `<b>Boy:</b> ${veri.boy} cm<br>`;
+            yaz += `<b>Güncel Kilo:</b> ${veri.kilo} kg<br>`;
+        }
+        document.getElementById("hedefGoster").innerHTML = yaz;
+    }
+
+    function kaydetPlan() {
+        const yemekPlan = {};
+        const sporPlan = {};
+        gunler.forEach(gun => {
+            yemekPlan[gun] = {
+                ogle: document.getElementById("yemek_ogle_" + gun).value,
+                aksam: document.getElementById("yemek_aksam_" + gun).value
+            };
+            sporPlan[gun] = document.getElementById("spor_" + gun).value;
+        });
+
+        const plan = {
+            yemek: yemekPlan,
+            spor: sporPlan
+        };
+
+        localStorage.setItem("haftalikPlan", JSON.stringify(plan));
+        gosterKayitlar();
+    }
+
+    function gosterKayitlar() {
+        const veri = JSON.parse(localStorage.getItem("haftalikPlan") || "{}");
+        let yaz = "Yemek Planı:\n";
+        gunler.forEach(gun => {
+            const ogleYemek = veri.yemek?.[gun]?.ogle || "";
+            const aksamYemek = veri.yemek?.[gun]?.aksam || "";
+            yaz += `${gun} Öğle: ${ogleYemek}\n`;
+            yaz += `${gun} Akşam: ${aksamYemek}\n`;
+        });
+
+        yaz += "\nSpor Planı:\n";
+        gunler.forEach(gun => {
+            yaz += `${gun}: ${veri.spor?.[gun] || ""}\n`;
+        });
+
+        document.getElementById("kayitlar").textContent = yaz;
+    }
+
+    // Sayfa açılınca otomatik verileri yükle
+    gosterHedef();
+    gosterKayitlar();
+</script>
+
+</body>
+</html>
